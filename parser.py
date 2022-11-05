@@ -38,8 +38,8 @@ def parse_components(soup):
     parsed_data = []
     for cmpt in soup.find("ol", id="b_results"):
         parsed_data.append(cmpt["class"])
-        if cmpt.get("id") is not None:
-            parsed_data.append(cmpt["id"])
+        if cmpt.has_attr("id"):
+          parsed_data.append(cmpt["id"])
     return parsed_data
 
 
