@@ -64,30 +64,29 @@ def parse_qry(soup: BeautifulSoup):
     return re.sub(r" - Search$", "", soup.find("title").get_text())
 
 
-def parse_serp(soup: BeautifulSoup, serp_id: int = None):
+def parse_serp(serp, serp_id: int = None):
     """parse components from SERP
 
     Args:
-        soup (BeautifulSoup): SERP html
+        serp: SERP
         serp_id (int): SERP id. Defaults to None.
 
     Returns:
         List[dict]: parsed components
     """
-    parsed = []
+    
+    if not isinstance(serp, BeautifulSoup):
+        serp = BeautifulSoup(serp, "lxml")
 
     # final 2 elements in b_results do not correspond to components
-    for cmpt_rank, cmpt in enumerate(soup.find("ol", id="b_results").contents[:-2]):
+    parsed = []
+    for cmpt_rank, cmpt in enumerate(serp.find("ol", id="b_results").contents[:-2]):
         cmpt_type = classify_type(cmpt)
         cmpt_parser = CMPT_PARSERS[cmpt_type]
         parsed_cmpts = cmpt_parser(cmpt, cmpt_type, cmpt_rank).parse()
         parsed.extend(parsed_cmpts)
 
-    lang = parse_lang(soup)
-    qry = parse_qry(soup)
     for serp_rank, cmpt in enumerate(parsed):
-        cmpt["lang"] = lang
-        cmpt["qry"] = qry
         cmpt["serp_rank"] = serp_rank
         cmpt["serp_id"] = serp_id
 

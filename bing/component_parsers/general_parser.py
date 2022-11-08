@@ -12,7 +12,7 @@ class GeneralParser:
         """
         self.cmpt = cmpt
         self.results = {
-            "cmpt_type": cmpt_type,
+            "type": cmpt_type,
             "cmpt_rank": cmpt_rank,
         }
     
