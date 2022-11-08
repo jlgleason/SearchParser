@@ -1,0 +1,3 @@
+fire # for development
+beautifulsoup4
+lxml
