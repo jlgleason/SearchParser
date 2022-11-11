@@ -1,9 +1,10 @@
 import re
+import requests
 
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
-from component_parsers import CMPT_PARSERS
+from .component_parsers import CMPT_PARSERS
 
 # Treats every component as the same, extracts two types of info:
 # what kind of component (ad or not)
@@ -74,7 +75,7 @@ def parse_serp(serp, serp_id: int = None):
     Returns:
         List[dict]: parsed components
     """
-    
+
     if not isinstance(serp, BeautifulSoup):
         serp = BeautifulSoup(serp, "lxml")
 
