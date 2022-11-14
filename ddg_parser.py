@@ -13,16 +13,22 @@ import parser
 def parse_components(soup):
     parsed_data = []
     head = soup.body
-    for cmpt in head.find("div", id="links_wrapper"):
+    for cmpt in head.find("div", id="ads"):
         parsed_data.append(cmpt["class"])
-        class_str = str(cmpt.get("class"))
-        if class_str == "['results--main']":
-            for each in cmpt.children:
-                if each.has_attr("class"):
-                    parsed_data.append(each["class"])
-                elif each.has_attr("id"):
-                    parsed_data.append(each["id"])
+        for each in cmpt.children:
+            if each.has_attr("class"):
+                parsed_data.append(each["class"])
+            elif each.has_attr("id"):
+                parsed_data.append(each["id"])
+    for cmpt in head.find("div", id="links"):
+        parsed_data.append(cmpt["class"])
+        for each in cmpt.children:
+            if each.has_attr("class"):
+                parsed_data.append(each["class"])
+            elif each.has_attr("id"):
+                parsed_data.append(each["id"])
     return parsed_data
+
 
 
 def main():
