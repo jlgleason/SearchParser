@@ -2,14 +2,8 @@ from bs4 import BeautifulSoup, SoupStrainer
 
 import parser
 
-# Treats every component as the same, extracts two types of info:
-# what kind of component (ad or not)
-# and what the url was (to classify the domain)
-# find id=b_results and iterate through descendants
-# API ad client: Fix US region, English sample, match type, ad position
 
-
-# Parses components in results--main tree and also searches for id tags
+# Parses components in ads and links trees, also searches for id tags
 def parse_components(soup):
     parsed_data = []
     head = soup.body
@@ -29,6 +23,20 @@ def parse_components(soup):
                 parsed_data.append(each["id"])
     return parsed_data
 
+# Finds url of result by finding h2 component with specific class in soup, then uses that to find the url
+def get_url(soup):
+    attr = soup.find("h2", class_="LnpumSThxEWMIsDdAT17 CXMyPcQ6nDv47DKFeywM")
+    if attr:
+        return attr.find("a", class_="eVNpHGjtxRBq_gLOfGDr LQNqh2U1kzYxREs65IJu").get("href")
+    else:
+        return None
+# Finds title of result by searching for span component in soup and returning the text 
+def get_title(soup):
+    title = soup.body.find("span", class_="EKtkFWMYpwzMKOYr0GYm LQVY1Jpkk8nyJ6HBWKAk")
+    if title:
+        return title.get_text()
+    else:
+        return None
 
 
 def main():
@@ -36,8 +44,12 @@ def main():
     soup = parser.open_file("/Users/alicekoeninger/PycharmProjects/ddg_searcher/ddg_data.txt")
     # Parse components
     parsed_data = parse_components(soup)
-    # Write parsed data to file 
-    parser.save_data("ddg_components.txt", parsed_data)
+
+    # Write parsed data to file
+    parser.save_data("/Users/alicekoeninger/PycharmProjects/ddg_searcher/ddg_components.txt", parsed_data)
+    # Not sure where we want the output of these functions to go
+    print(get_title(soup))
+    print(get_url(soup))
 
 
 if __name__ == "__main__":
