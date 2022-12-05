@@ -25,9 +25,9 @@ def parse_components(soup):
 
 # Finds url of result by finding h2 component with specific class in soup, then uses that to find the url
 def get_url(soup):
-    attr = soup.body.find("article", attrs={"data-nrn": "result"})
+    attr = soup.body.find("a", attrs={"data-testid": "result-extras-url-link", "target": "_self"})
     if attr:
-        return attr.find("a").get("href")
+        return attr.get("href")
     else:
         return None
 # Finds title of result by searching for span component in soup and returning the text 
