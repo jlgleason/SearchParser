@@ -1,5 +1,5 @@
 # SearchParser
-Parse Bing, DuckDuckGo, and Yahoo SERPs
+Parse Bing and DuckDuckGo SERPs
 
-## Bing TODOS
-- support components beyond general/ad
+## TODOS
+- support shopping ads carousel

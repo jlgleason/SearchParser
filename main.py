@@ -1,51 +1,89 @@
 import os
 import pprint
+import argparse
+import asyncio
 
-import fire
 from bs4 import BeautifulSoup
 
 from bing import bing
-from searcher import search
+from ddg import ddg
 from utils import load_html, save_html
 
 
-PARSER_MAP = {
-    "bing": bing.parse_serp,
-}
-
-
-def main(
-    sengine: str,
-    qry: str,
-    save_dir: str = None,
-):
-    """runs query on search engine, saves html, prints parsed results
+def test_bing(qry: str, save_dir: str = None):
+    """runs qry on Bing, saves html, prints parsed results
 
     Args:
-        sengine (str): search engine
         qry (str): query (e.g. ``car insurance")
-        save_dir (str): directory to save SERP html. Defaults to f"{sengine}/serps".
+        save_dir (str): directory to save SERP html. Defaults to f"bing/serps".
     """
 
     if not save_dir:
-        save_dir = f"{sengine}/serps"
+        save_dir = "bing/serps"
     fp = os.path.join(save_dir, f"{'_'.join(qry.split())}.html")
 
     if os.path.exists(fp):
         print(f"Loading saved html: {qry}")
         html = load_html(fp)
     else:
-        print(f"Running new search: {qry}")
-        if sengine.lower() not in PARSER_MAP.keys():
-            raise ValueError(f"'senginge' must be one of {list(PARSER_MAP.keys())}")
-        html = search(sengine.lower(), qry)
+        html = bing.search(qry)
         save_html(html, fp)
 
     soup = BeautifulSoup(html, "lxml")
-    results = PARSER_MAP[sengine.lower()](soup)
+    results = bing.parse_serp(soup)
     pp = pprint.PrettyPrinter()
     pp.pprint(results)
 
 
+async def test_ddg(qry: str, save_dir: str = None):
+    """runs qry on DuckDuckGo, saves html, prints parsed results
+
+    Args:
+        qry (str): query (e.g. ``car insurance")
+        save_dir (str): directory to save SERP html. Defaults to f"ddg/serps".
+    """
+    
+    if not save_dir:
+        save_dir = "ddg/serps"
+    fp = os.path.join(save_dir, f"{'_'.join(qry.split())}.html")
+
+    if os.path.exists(fp):
+        print(f"Loading saved html: {qry}")
+        html = load_html(fp)
+    else:
+        html = await ddg.search(qry)
+        save_html(str.encode(html), fp)
+    
+    soup = BeautifulSoup(html, "lxml")
+    results = ddg.parse_serp(soup)
+    pp = pprint.PrettyPrinter()
+    pp.pprint(results)
+
 if __name__ == "__main__":
-    fire.Fire(main)
+    parser = argparse.ArgumentParser(
+        description="Crawl and parse Bing or DuckDuckGo SERPs"
+    )
+    parser.add_argument(
+        "-s",
+        "--sengine",
+        default="bing",
+        type=str,
+    )
+    parser.add_argument(
+        "-q",
+        "--qry",
+        type=str,
+    )
+    parser.add_argument(
+        "-d",
+        "--save_dir",
+        type=str,
+        help="Save SERP html to this directory"
+    )
+    # TODO test argument
+    args = parser.parse_args()
+    
+    if args.sengine == "bing":
+        test_bing(args.qry, args.save_dir)
+    elif args.sengine == "ddg":
+        asyncio.run(test_ddg(args.qry, args.save_dir))
