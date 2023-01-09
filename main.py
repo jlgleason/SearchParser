@@ -45,10 +45,11 @@ async def run_ddg(fp_qrys: str, fp_parsed: str, n_threads: int = 10):
         fp = open(fp_parsed, "a")
         i = 0
         while i <= len(qrys):
+            print(qrys[i:i+n_threads])
             browser = await launch()
             tasks = [
                 asyncio.ensure_future(ddg.crawl(browser, qry, fp))
-                for qry in qrys[i:n_threads]
+                for qry in qrys[i:i+n_threads]
             ]
             await asyncio.gather(*tasks)
             await browser.close()
@@ -70,9 +71,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "--fp_parsed", type=str, help="Save parsing results to this file"
     )
+    parser.add_argument(
+        "--n_threads", type=int, help="Number of queries to run in parallel for DDG crawling", default=10
+    )
     args = parser.parse_args()
 
     if args.sengine == "bing":
         run_bing(args.fp_qrys, args.fp_parsed)
     elif args.sengine == "ddg":
-        asyncio.run(run_ddg(args.fp_qrys, args.fp_parsed))
+        asyncio.run(run_ddg(args.fp_qrys, args.fp_parsed, args.n_threads))
