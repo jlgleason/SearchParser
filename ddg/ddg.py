@@ -22,10 +22,15 @@ def parse_serp(serp, serp_id: int = None):
 
     parsed = []
     for cmpt_rank, cmpt in enumerate(serp.find("div", id="ads")):
-        cmpt_parser = CMPT_PARSERS["ad"]
-        parsed_cmpts = cmpt_parser(cmpt, "ad", cmpt_rank).parse()
+        cmpt_type = classify_ad_type(cmpt)
+        cmpt_parser = CMPT_PARSERS[cmpt_type]
+        parsed_cmpts = cmpt_parser(cmpt, cmpt_type, cmpt_rank).parse()
         parsed.extend(parsed_cmpts)
-    offset = len(parsed)
+
+    if len(parsed):
+        offset = parsed[-1]["cmpt_rank"] + 1
+    else:
+        offset = 0
 
     # final 2 elements in links do not correspond to components
     for cmpt_rank, cmpt in enumerate(serp.find("div", id="links").contents[:-2]):
@@ -39,6 +44,23 @@ def parse_serp(serp, serp_id: int = None):
         cmpt["serp_id"] = serp_id
 
     return parsed
+
+
+def classify_ad_type(cmpt: Tag):
+    """classifies ad type 
+
+    Args:
+        cmpt (Tag): html element
+
+    Returns:
+        str: component type
+    """  
+    if "nrn-react-div" in cmpt["class"]:
+        return "ad"
+    elif "module-slot" in cmpt["class"]:
+        return "shopping_ads" 
+    else:
+        return "unknown"
 
 
 def classify_type(cmpt: Tag):
