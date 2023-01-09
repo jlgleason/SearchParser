@@ -1,17 +1,30 @@
-def parse_top_image_carousel(cmpt):
-    """
-    Parse shopping carousel titles and urls
-    b_slidesContainer component
-    :param cmpt: carousel component
-    :return: parsed dictionary
-    """
-    parsed = {'type': 'top_image_carousel'}
-    title = cmpt.find_all('span', {'class': 'b_adsTrunTx'})
-    url = cmpt.find_all('a', {'id': 'rine'})
+from .general_parser import GeneralParser
 
-    if title:
-        parsed['title'] = '|'.join([t.text for t in title])
-    if url:
-        parsed['url'] = url['href'].text
 
-    return parsed
+class ShoppingAdsParser(GeneralParser):
+    def __init__(self, *args):
+        """parses shopping ad component"""
+        super().__init__(*args)
+
+    def parse(self):
+        titles = self.cmpt.find_all("span", class_="b_adsTrunTx")
+        urls = self.cmpt.find_all("a", class_='')
+        return [
+            self.parse_shopping_ad(i, ad)
+            for i, ad in zip(titles, urls)
+        ]
+
+    def parse_shopping_ad(self, i, ad):
+        return self.results | {
+                "sub_rank": i,
+                "url" : self.get_url(ad),
+                "title": self.get_title(ad),
+        }
+
+    def get_url(self, ad):
+        return ad.get("href")
+
+
+    def get_title(self, ad):
+        return '|'.join([t.text for t in ad])
+
