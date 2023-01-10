@@ -77,7 +77,7 @@ async def main(
             await browser.close()
             i += n_threads
             num = min(i, len(qrys))
-            print(f"Crawled {num} of {len(qrys)} queries ({round(num / len(qrys), 3)})")
+            print(f"Crawled {num} of {len(qrys)} queries ({round(num, 3)})")
     except:
         await browser.close()
 
