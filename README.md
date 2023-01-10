@@ -11,5 +11,3 @@ Parse Bing and DuckDuckGo SERPs
 
 ``python3 main.py -s ddg --fp_qrys qrys.txt --fp_parsed results.json``
 
-## TODO
-- support shopping ads carousel
