@@ -79,39 +79,3 @@ def classify_type(cmpt: Tag):
         return "general"
     else:
         return "unknown"
-
-
-async def search(browser: browser.Browser, qry: str):
-    """submits a query to DuckDuckGo using pyppeteer
-
-    Args:
-        browser (browser.Browser): chrome browser
-        qry (str): search query
-
-    Returns:
-        bytes: response content
-    """
-
-    page = await browser.newPage()
-    user_agent = await page.evaluate("() => navigator.userAgent")
-    await page.setUserAgent(user_agent.replace("HeadlessChrome", "Chrome"))
-    await page.goto(f"https://duckduckgo.com/?q={quote_plus(qry)}")
-    html = await page.content()
-    await page.close()
-    return html
-
-
-async def crawl(browser: browser.Browser, qry: str, fp_save: str):
-    """runs search, parses html, saves to file
-
-    Args:
-        browser (browser.Browser): chrome browser
-        qry (str): search query
-        fp_save (str): save file
-    """
-
-    html = await search(browser, qry)
-    results = parse_serp(html, qry=qry)
-    for result in results:
-        fp_save.write(json.dumps(result))
-        fp_save.write("\n")
