@@ -54,6 +54,7 @@ async def run_ddg(fp_qrys: str, fp_parsed: str, n_threads: int = 10):
             await asyncio.gather(*tasks)
             await browser.close()
             i += n_threads
+            print(f'Crawled {i} of {len(qrys)} queries ({round(i/len(qrys), 2)})')
     except:
         await browser.close()
     finally:
