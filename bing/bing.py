@@ -27,24 +27,21 @@ def parse_serp(serp, serp_id: int = None, qry: str = None):
         serp = BeautifulSoup(serp, "lxml")
     
     parsed = []
-    
-    for cmpt_rank, cmpt  in enumerate(serp.find("div", id="b_pole")):
-        cmpt_type = classify_type(cmpt)
+    cmpt = serp.find("div", class_="pa_carousel adsMvCarousel")
+    if cmpt:
+        cmpt_type = "shopping_ads"
         cmpt_parser = CMPT_PARSERS[cmpt_type]
-        parsed_cmpts = cmpt_parser(cmpt, cmpt_type, cmpt_rank).parse()
+        parsed_cmpts = cmpt_parser(cmpt, cmpt_type, 0).parse()
         parsed.extend(parsed_cmpts)
-    
-    if len(parsed):
         offset = parsed[-1]["cmpt_rank"] + 1
     else:
         offset = 0
 
     # final 2 elements in b_results do not correspond to components
-    
     for cmpt_rank, cmpt in enumerate(serp.find("ol", id="b_results").contents[:-2]):
         cmpt_type = classify_type(cmpt)
         cmpt_parser = CMPT_PARSERS[cmpt_type]
-        parsed_cmpts = cmpt_parser(cmpt, cmpt_type, cmpt_rank).parse()
+        parsed_cmpts = cmpt_parser(cmpt, cmpt_type, cmpt_rank + offset).parse()
         parsed.extend(parsed_cmpts)
 
     for serp_rank, cmpt in enumerate(parsed):

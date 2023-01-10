@@ -3,6 +3,7 @@ import asyncio
 import requests
 
 from pyppeteer import launch
+import tqdm 
 
 from bing import bing
 from ddg import ddg
@@ -18,13 +19,12 @@ def run_bing(fp_qrys: str, fp_parsed: str):
     """
 
     qrys = get_new_queries(fp_qrys, fp_parsed)
-
+    
     try:
         fp = open(fp_parsed, "a")
         sesh = requests.Session()
-        for qry in qrys:
+        for qry in tqdm.tqdm(qrys):
             bing.crawl(sesh, qry, fp)
-            # TODO add some sleep?
     finally:
         sesh.close()
         fp.close()
