@@ -11,8 +11,9 @@ class AdParser(GeneralParser):
         return [self.parse_ad(i, ad) for i, ad in enumerate(self.cmpt.find("ul"))]
 
     def parse_ad(self, i, ad):
+        self.results["cmpt_rank"] = i
         return self.results | {
-            "sub_rank": i,
+            "sub_rank": 0,
             "url": self.get_url(ad),
             "title": self.get_title(ad),
         }

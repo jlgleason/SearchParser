@@ -112,7 +112,10 @@ def crawl(sesh: requests.Session, qry: str, fp_save: str):
     """
 
     html = search(sesh, qry)
-    results = parse_serp(html, qry=qry)
-    for result in results:
-        fp_save.write(json.dumps(result))
-        fp_save.write("\n")
+    try:
+        results = parse_serp(html, qry=qry)
+        for result in results:
+            fp_save.write(json.dumps(result))
+            fp_save.write("\n")
+    except:
+        print(f"parsing error for qry: {qry}")
