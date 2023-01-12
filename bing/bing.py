@@ -64,7 +64,10 @@ def classify_type(cmpt: Tag):
     if "b_algo" in cmpt["class"]:
         return "general"
     elif "b_ad" in cmpt["class"]:
-        return "ad"
+        if cmpt.find("div", class_="autos_ml_ads_container"):
+            return "car_ads"
+        else:
+            return "ad"
     else:
         return "unknown"
 
