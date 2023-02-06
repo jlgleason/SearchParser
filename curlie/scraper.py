@@ -68,6 +68,7 @@ def get_subcategories(html: BeautifulSoup, sesh: requests.Session) -> None:
                 sites = (get_sites(page_text, category))
                 print("Writing to file...\n")
                 write_to_file(sites)
+                get_subcategories(page_text, sesh)
     else:
         print("Reached end of subcategories... Done!\n")
         return
@@ -81,8 +82,8 @@ def write_to_file(sites: dict) -> None:
     """
     with open("results.txt", mode="a") as outfile:
         for each in sites:
-            outfile.write("Name: " + each + ", URL: " + sites.get(each)[0]
-                          + ", Category: " + sites.get(each)[1] + "\n\n")
+            outfile.write("{\"Name\": \"" + each + "\", \"URL\": \"" + sites.get(each)[0]
+                          + "\", \"Category\": \"" + sites.get(each)[1] + "\"}\n\n")
     outfile.close()
 
 
