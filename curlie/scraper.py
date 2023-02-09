@@ -1,4 +1,6 @@
+import json
 import requests
+from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
 
 """
@@ -16,36 +18,28 @@ def search(sesh: requests.Session, qry: str):
     Returns:
         BeautifulSoup: html-parsed response content
     """
-
     r = sesh.get(
         "https://www.curlie.org/" + qry,
-        headers={
-            "Host": "www.curlie.org",
-            "Referer": "https://www.curlie.org/",
-            "Accept": "*/*",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0",
-            "Accept-Encoding": "gzip,deflate",
-            "Accept-Language": "en-US,en;q=0.5",
-        },
-        timeout=10,
+        timeout=30,
     ).text
-    return BeautifulSoup(r, "html.parser")
+    return BeautifulSoup(r, "lxml")
 
 
-def get_sites(html: BeautifulSoup, category: str) -> dict:
+def get_sites(html: BeautifulSoup, category: str) -> list:
     """
     Scrapes sites from Curlie page
     :param html: BeautifulSoup-parsed html
     :param category: current category
     :return: dictionary mapping business name to url and category
     """
-    sites = {}
+    sites = []
     start = html.find_all("div", class_="site-title")
     if start:
         for each in start:
             site = each.find("a", target="_blank")
             if site not in sites:
-                sites[site.text] = (site.get("href"), category)
+                current = {"Name": site.text, "URL": site.get("href"), "Category": category}
+                sites.append(current)
     return sites
 
 
@@ -57,46 +51,57 @@ def get_subcategories(html: BeautifulSoup, sesh: requests.Session) -> None:
     :return: all scraped sites
     """
     start = html.find_all("div", class_="cat-list results leaf-nodes")
+    visited = set()
     if start is not None:
         for each in start:
             cat_cmpts = each.find_all("div", class_="cat-item")
             for cmpt in cat_cmpts:
                 category = cmpt.find("a").get("href")
-                print("Searching subcategories...\n")
-                page_text = search(sesh, category).find("div")
-                print("Finding sites...\n")
-                sites = (get_sites(page_text, category))
-                print("Writing to file...\n")
-                write_to_file(sites)
-                get_subcategories(page_text, sesh)
+                visited.add(category)
+        scrape_categories(visited, sesh)
     else:
         print("Reached end of subcategories... Done!\n")
         return
 
 
-def write_to_file(sites: dict) -> None:
+def scrape_categories(categories: set, sesh: requests.Session) -> None:
+    """
+    Helper function for get_subcategories
+    """
+    for cat in categories:
+        page_text = search(sesh, cat).find("div")
+        print("Finding sites in category" + cat + "...\n")
+        sites = (get_sites(page_text, cat))
+        write_to_file(sites)
+        get_subcategories(page_text, sesh)
+
+
+def write_to_file(sites: list) -> None:
     """
     Writes sites to file by name, url, and category
     :param sites: list of scraped sites
     :return: nothing
     """
-    with open("results.txt", mode="a") as outfile:
-        for each in sites:
-            outfile.write("{\"Name\": \"" + each + "\", \"URL\": \"" + sites.get(each)[0]
-                          + "\", \"Category\": \"" + sites.get(each)[1] + "\"}\n\n")
+    with open("results1.txt", mode="a") as outfile:
+        for site in sites:
+            outfile.write(json.dumps(site))
+            outfile.write("\n")
     outfile.close()
 
 
 def main():
     r = requests.session()
+    r.mount("https://www.curlie.org/", HTTPAdapter(max_retries=5))
 
-    category = "Business"
+    category = "Business/Accounting/"
     page_text = search(r, category).find("div")
     get_subcategories(page_text, r)
 
+    """
     category = "Shopping"
     page_text = search(r, category).find("div")
     get_subcategories(page_text, r)
+    """
 
 
 if __name__ == "__main__":
