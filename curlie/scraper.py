@@ -91,7 +91,9 @@ def write_to_file(sites: list) -> None:
 
 def main():
     r = requests.session()
+    # hard code a new session after 50 or so requests
     r.mount("https://www.curlie.org/", HTTPAdapter(max_retries=5))
+    # put new urls into queue, then loop through until queue is exhausted
 
     category = "Business/Accounting/"
     page_text = search(r, category).find("div")
