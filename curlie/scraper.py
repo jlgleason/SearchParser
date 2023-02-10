@@ -9,17 +9,19 @@ Records sites under each category and scrapes subcategories,
 Then performs the same process on all subcategories
 """
 
+VISITED = set()
 
-def search(sesh: requests.Session, qry: str):
+
+def search(sesh: requests.Session, category: str):
     """submits a query to Curlie using requests
     Args:
         sesh (requests.Session): requests session
-        qry (str): category
+        category (str): category
     Returns:
         BeautifulSoup: html-parsed response content
     """
     r = sesh.get(
-        "https://www.curlie.org/" + qry,
+        "https://www.curlie.org/" + category,
         timeout=30,
     ).text
     return BeautifulSoup(r, "lxml")
@@ -38,12 +40,16 @@ def get_sites(html: BeautifulSoup, category: str) -> list:
         for each in start:
             site = each.find("a", target="_blank")
             if site not in sites:
-                current = {"Name": site.text, "URL": site.get("href"), "Category": category}
+                current = {
+                    "Name": site.text,
+                    "URL": site.get("href"),
+                    "Category": category,
+                }
                 sites.append(current)
     return sites
 
 
-def get_subcategories(html: BeautifulSoup, sesh: requests.Session) -> None:
+def get_subcategories(html: BeautifulSoup, sesh: requests.Session) -> list:
     """
     Gets subcategories for each site and calls recursively
     :param html: BeautifulSoup parsed html
@@ -51,29 +57,13 @@ def get_subcategories(html: BeautifulSoup, sesh: requests.Session) -> None:
     :return: all scraped sites
     """
     start = html.find_all("div", class_="cat-list results leaf-nodes")
-    visited = set()
+    all_cats = []
     if start is not None:
         for each in start:
             cat_cmpts = each.find_all("div", class_="cat-item")
-            for cmpt in cat_cmpts:
-                category = cmpt.find("a").get("href")
-                visited.add(category)
-        scrape_categories(visited, sesh)
-    else:
-        print("Reached end of subcategories... Done!\n")
-        return
-
-
-def scrape_categories(categories: set, sesh: requests.Session) -> None:
-    """
-    Helper function for get_subcategories
-    """
-    for cat in categories:
-        page_text = search(sesh, cat).find("div")
-        print("Finding sites in category" + cat + "...\n")
-        sites = (get_sites(page_text, cat))
-        write_to_file(sites)
-        get_subcategories(page_text, sesh)
+            cats = [cmpt.find("a").get("href") for cmpt in cat_cmpts]
+            all_cats.extend(cats)
+    return all_cats
 
 
 def write_to_file(sites: list) -> None:
@@ -89,15 +79,37 @@ def write_to_file(sites: list) -> None:
     outfile.close()
 
 
-def main():
-    r = requests.session()
-    # hard code a new session after 50 or so requests
-    r.mount("https://www.curlie.org/", HTTPAdapter(max_retries=5))
-    # put new urls into queue, then loop through until queue is exhausted
+def scrape_category(sesh, category):
+    """
+    1) requests category, 2) gets subcategories, 3) gets sites, 4) writes sites to file
+    :param sesh: requests session
+    :param category: current category
+    :param top_level_cats: only scrape categories under these top levels
+    :return: nothing
+    """
 
-    category = "Business/Accounting/"
-    page_text = search(r, category).find("div")
-    get_subcategories(page_text, r)
+    # check if category already visited
+    if category in VISITED:
+        return
+
+    print(f"Scraping {category}")
+    page_text = search(sesh, category).find("div")
+    sites = get_sites(page_text, category)
+    write_to_file(sites)
+    VISITED.add(category)
+
+    # get subcategories, recursively scrape
+    sub_cats = get_subcategories(page_text, sesh)
+    for sub_cat in sub_cats:
+        scrape_category(sesh, sub_cat)
+
+
+def main():
+    sesh = requests.session()
+    sesh.mount("https://www.curlie.org/", HTTPAdapter(max_retries=5))
+
+    category = "/en/Business/Accounting/"
+    scrape_category(sesh, category)
 
     """
     category = "Shopping"
@@ -108,3 +120,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
