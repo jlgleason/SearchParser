@@ -1,6 +1,6 @@
 import json
+import queue
 import requests
-from requests.adapters import HTTPAdapter
 from bs4 import BeautifulSoup
 
 """
@@ -10,6 +10,7 @@ Then performs the same process on all subcategories
 """
 
 VISITED = set()
+QUEUE = queue.Queue()
 
 
 def search(sesh: requests.Session, category: str):
@@ -49,7 +50,7 @@ def get_sites(html: BeautifulSoup, category: str) -> list:
     return sites
 
 
-def get_subcategories(html: BeautifulSoup, sesh: requests.Session) -> list:
+def get_subcategories(html: BeautifulSoup) -> list:
     """
     Gets subcategories for each site and calls recursively
     :param html: BeautifulSoup parsed html
@@ -72,14 +73,14 @@ def write_to_file(sites: list) -> None:
     :param sites: list of scraped sites
     :return: nothing
     """
-    with open("results1.txt", mode="a") as outfile:
+    with open("results2.txt", mode="a") as outfile:
         for site in sites:
             outfile.write(json.dumps(site))
             outfile.write("\n")
     outfile.close()
 
 
-def scrape_category(sesh, category):
+def scrape_category(sesh, count):
     """
     1) requests category, 2) gets subcategories, 3) gets sites, 4) writes sites to file
     :param sesh: requests session
@@ -87,29 +88,44 @@ def scrape_category(sesh, category):
     :param top_level_cats: only scrape categories under these top levels
     :return: nothing
     """
+    category = QUEUE.get()
 
     # check if category already visited
     if category in VISITED:
         return
 
     print(f"Scraping {category}")
+    if count == 50:
+        sesh.close()
+        sesh = requests.session
+        count = 0
+
+    count += 1
     page_text = search(sesh, category).find("div")
+
     sites = get_sites(page_text, category)
     write_to_file(sites)
     VISITED.add(category)
 
+
     # get subcategories, recursively scrape
-    sub_cats = get_subcategories(page_text, sesh)
+    sub_cats = get_subcategories(page_text)
     for sub_cat in sub_cats:
-        scrape_category(sesh, sub_cat)
+        print(f"Just added {category}")
+        QUEUE.put(sub_cat)
+    # scrape_category(sesh, count)
 
 
 def main():
     sesh = requests.session()
-    sesh.mount("https://www.curlie.org/", HTTPAdapter(max_retries=5))
+    count = 0
 
     category = "/en/Business/Accounting/"
-    scrape_category(sesh, category)
+    QUEUE.put(category)
+    print(f"Just added {category}")
+
+    while QUEUE.qsize() > 0:
+        scrape_category(sesh, count)
 
     """
     category = "Shopping"
