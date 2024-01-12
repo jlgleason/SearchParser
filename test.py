@@ -7,9 +7,9 @@ import requests
 from bs4 import BeautifulSoup
 from pyppeteer import launch
 
-from bing import bing
-from ddg import ddg
-from utils import load_html, save_html
+from src.bing import bing
+from src.ddg import ddg
+from src.utils import load_html, save_html
 
 
 def test_bing(qry: str, save_dir: str = None):
@@ -17,11 +17,12 @@ def test_bing(qry: str, save_dir: str = None):
 
     Args:
         qry (str): query (e.g. ``car insurance")
-        save_dir (str): directory to save SERP html. Defaults to f"bing/serps".
+        save_dir (str): directory to save SERP html. Defaults to f"serps/bing".
     """
 
     if not save_dir:
-        save_dir = "bing/serps"
+        save_dir = "serps/bing"
+    os.makedirs(save_dir, exist_ok=True)
     fp = os.path.join(save_dir, f"{'_'.join(qry.split())}.html")
 
     if os.path.exists(fp):
@@ -43,11 +44,12 @@ async def test_ddg(qry: str, save_dir: str = None):
 
     Args:
         qry (str): query (e.g. ``car insurance")
-        save_dir (str): directory to save SERP html. Defaults to f"ddg/serps".
+        save_dir (str): directory to save SERP html. Defaults to f"serps/ddg".
     """
 
     if not save_dir:
-        save_dir = "ddg/serps"
+        save_dir = "serps/ddg"
+    os.makedirs(save_dir, exist_ok=True)
     fp = os.path.join(save_dir, f"{'_'.join(qry.split())}.html")
 
     if os.path.exists(fp):

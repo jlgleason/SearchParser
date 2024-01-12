@@ -5,9 +5,9 @@ import requests
 from pyppeteer import launch
 import tqdm 
 
-from bing import bing
-from ddg import ddg
-from utils import get_new_queries
+from src.bing import bing
+from src.ddg import ddg
+from src.utils import get_new_queries
 
 
 def run_bing(fp_qrys: str, fp_parsed: str):

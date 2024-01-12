@@ -7,7 +7,7 @@ class ShoppingAdsParser(GeneralParser):
         super().__init__(*args)
 
     def parse(self):
-        titles = self.cmpt.find_all("p", class_="pa_title")
+        titles = self.cmpt.find_all("div", class_="pa_title")
         urls = self.cmpt.find_all("a", class_="")
         return [
             self.parse_shopping_ad(i, title, url)

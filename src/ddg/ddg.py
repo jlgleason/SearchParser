@@ -23,22 +23,10 @@ def parse_serp(serp, serp_id: int = None, qry: str = None):
         serp = BeautifulSoup(serp, "lxml")
 
     parsed = []
-    for cmpt_rank, cmpt in enumerate(serp.find("div", id="ads")):
-        cmpt_type = classify_ad_type(cmpt)
-        cmpt_parser = CMPT_PARSERS[cmpt_type]
-        parsed_cmpts = cmpt_parser(cmpt, cmpt_type, cmpt_rank).parse()
-        parsed.extend(parsed_cmpts)
-
-    if len(parsed):
-        offset = parsed[-1]["cmpt_rank"] + 1
-    else:
-        offset = 0
-
-    # final 2 elements in links do not correspond to components
-    for cmpt_rank, cmpt in enumerate(serp.find("div", id="links").contents[:-2]):
+    for cmpt_rank, cmpt in enumerate(serp.find("ol", class_="react-results--main")):
         cmpt_type = classify_type(cmpt)
         cmpt_parser = CMPT_PARSERS[cmpt_type]
-        parsed_cmpts = cmpt_parser(cmpt, cmpt_type, cmpt_rank + offset).parse()
+        parsed_cmpts = cmpt_parser(cmpt, cmpt_type, cmpt_rank).parse()
         parsed.extend(parsed_cmpts)
 
     for serp_rank, cmpt in enumerate(parsed):
@@ -47,23 +35,6 @@ def parse_serp(serp, serp_id: int = None, qry: str = None):
         cmpt["qry"] = qry
 
     return parsed
-
-
-def classify_ad_type(cmpt: Tag):
-    """classifies ad type
-
-    Args:
-        cmpt (Tag): html element
-
-    Returns:
-        str: component type
-    """
-    if "nrn-react-div" in cmpt["class"]:
-        return "ad"
-    elif "module-slot" in cmpt["class"]:
-        return "shopping_ads"
-    else:
-        return "unknown"
 
 
 def classify_type(cmpt: Tag):
@@ -75,8 +46,11 @@ def classify_type(cmpt: Tag):
     Returns:
         str: component type
     """
-    if "nrn-react-div" in cmpt["class"]:
+    data_type = cmpt.get("data-layout")
+    if data_type == "organic":
         return "general"
+    elif data_type == "ad":
+        return "ad"
     else:
         return "unknown"
 

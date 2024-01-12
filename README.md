@@ -1,5 +1,9 @@
 # SearchParser
-Parse Bing and DuckDuckGo SERPs
+Simple web scraper/parser that can run searches on Bing/DuckDuckGo and extract ad/general results from their SERPs
+
+## Installation
+
+`pip3 install git+https://github.com/jlgleason/SearchParser`
 
 ## Usage
 

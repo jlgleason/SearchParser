@@ -25,7 +25,7 @@ def parse_serp(serp, serp_id: int = None, qry: str = None):
 
     if not isinstance(serp, BeautifulSoup):
         serp = BeautifulSoup(serp, "lxml")
-    
+
     parsed = []
     cmpt = serp.find("div", class_="pa_carousel adsMvCarousel")
     if cmpt:
@@ -33,16 +33,20 @@ def parse_serp(serp, serp_id: int = None, qry: str = None):
         cmpt_parser = CMPT_PARSERS[cmpt_type]
         parsed_cmpts = cmpt_parser(cmpt, cmpt_type, 0).parse()
         parsed.extend(parsed_cmpts)
+
+    if len(parsed):
         offset = parsed[-1]["cmpt_rank"] + 1
     else:
         offset = 0
 
-    # final 2 elements in b_results do not correspond to components
-    for cmpt_rank, cmpt in enumerate(serp.find("ol", id="b_results").contents[:-2]):
+    for cmpt_rank, cmpt in enumerate(serp.find("ol", id="b_results")):
         cmpt_type = classify_type(cmpt)
-        cmpt_parser = CMPT_PARSERS[cmpt_type]
-        parsed_cmpts = cmpt_parser(cmpt, cmpt_type, cmpt_rank + offset).parse()
-        parsed.extend(parsed_cmpts)
+        if cmpt_type == "ignore":
+            continue
+        else:
+            cmpt_parser = CMPT_PARSERS[cmpt_type]
+            parsed_cmpts = cmpt_parser(cmpt, cmpt_type, cmpt_rank + offset).parse()
+            parsed.extend(parsed_cmpts)
 
     for serp_rank, cmpt in enumerate(parsed):
         cmpt["serp_rank"] = serp_rank
@@ -61,6 +65,14 @@ def classify_type(cmpt: Tag):
     Returns:
         str: component type
     """
+
+    if "class" not in cmpt.attrs:
+        return "unknown"
+
+    ignore = ["b_msg", "b_pag", "fabcolapse"]
+    if any([t in cmpt["class"] for t in ignore]):
+        return "ignore"
+
     if "b_algo" in cmpt["class"]:
         return "general"
     elif "b_ad" in cmpt["class"]:
@@ -94,7 +106,7 @@ def search(sesh: requests.Session, qry: str):
             "Host": "www.bing.com",
             "Referer": "https://www.bing.com/",
             "Accept": "*/*",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept-Encoding": "gzip,deflate",
             "Accept-Language": "en-US,en;q=0.5",
         },

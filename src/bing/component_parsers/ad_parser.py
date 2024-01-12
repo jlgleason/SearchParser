@@ -8,7 +8,11 @@ class AdParser(GeneralParser):
         super().__init__(*args)
 
     def parse(self):
-        return [self.parse_ad(i, ad) for i, ad in enumerate(self.cmpt.find("ul"))]
+        ad_block = self.cmpt.find("ul")
+        if ad_block:
+            return [self.parse_ad(i, ad) for i, ad in enumerate(ad_block)]
+        else:
+            return []
 
     def parse_ad(self, i, ad):
         self.results["cmpt_rank"] = i
@@ -19,7 +23,11 @@ class AdParser(GeneralParser):
         }
 
     def get_url(self, ad):
-        return super().get_url(ad)
+        attribution = ad.find("div", class_="b_attribution")
+        if attribution:
+            return attribution.find("cite").text
+        else:
+            return None
     
     def get_title(self, ad):
         title = ad.find("h2")
